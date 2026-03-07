@@ -1,4 +1,4 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react"
+import { Handle, Position, type NodeProps } from "@xyflow/react";
 
 export function StartNode({ selected }: NodeProps) {
   return (
@@ -17,8 +17,8 @@ export function StartNode({ selected }: NodeProps) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!h-2.5 !w-2.5 !border-2 !border-zinc-700 !bg-zinc-900"
+        className="h-2.5 w-2.5 border-2 border-zinc-700 bg-zinc-900"
       />
     </div>
-  )
+  );
 }

@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/app/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { headers } from "next/headers"
-import { z } from "zod"
-
-const createFlowSchema = z.object({
-  name: z.string().min(1).max(100).default("Untitled Flow"),
-  description: z.string().max(500).optional(),
-})
+import { createFlowSchema } from "@/lib/flows/contracts"
 
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() })

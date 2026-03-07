@@ -1,4 +1,4 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react"
+import { Handle, Position, type NodeProps } from "@xyflow/react";
 
 export function EndNode({ selected }: NodeProps) {
   return (
@@ -10,7 +10,7 @@ export function EndNode({ selected }: NodeProps) {
       <Handle
         type="target"
         position={Position.Top}
-        className="!h-2.5 !w-2.5 !border-2 !border-zinc-700 !bg-zinc-900"
+        className="h-2.5 w-2.5 border-2 border-zinc-700 bg-zinc-900"
       />
       <div className="flex items-center gap-2">
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-700 text-[10px] font-bold text-white">
@@ -20,5 +20,5 @@ export function EndNode({ selected }: NodeProps) {
       </div>
       <p className="mt-1 text-[11px] text-zinc-500">Conversation ends</p>
     </div>
-  )
+  );
 }
