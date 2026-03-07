@@ -550,13 +550,13 @@ interface OutputBlock {
 ### Fase 1 — Fundamentos (Semana 1-2)
 
 - [ x ] Setup Next.js + Tailwind + shadcn/ui
-- [ ] Configurar Prisma (schema + migraciones)
-- [ ] Configurar Better Auth (email/password + session cookies + RBAC)
-- [ ] Auth pages (login/register con Better Auth)
-- [ ] Dashboard: listar, crear, eliminar flows
-- [ ] Builder: canvas React Flow con nodos básicos (Start, Message, End)
-- [ ] Persistencia: guardar/cargar flow desde PostgreSQL con Prisma
-- [ ] Auto-save con debounce
+- [ x ] Configurar Prisma (schema + migraciones)
+- [ x ] Configurar Better Auth (email/password + session cookies + RBAC)
+- [ x ] Auth pages (login/register con Better Auth)
+- [ x ] Dashboard: listar, crear, eliminar flows
+- [ x ] Builder: canvas React Flow con nodos básicos (Start, Message, End)
+- [ x ] Persistencia: guardar/cargar flow desde PostgreSQL con Prisma
+- [ x ] Auto-save con debounce
 
 ### Fase 2 — Builder Completo (Semana 3-4)
 

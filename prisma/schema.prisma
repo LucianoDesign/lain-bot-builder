@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
@@ -12,6 +9,10 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ============================================
+// AUTH (Better Auth)
+// ============================================
 
 enum Role {
   USER
@@ -25,10 +26,14 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?
   role          Role      @default(USER)
+  banned        Boolean?  @default(false)
+  banReason     String?
+  banExpires    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  flows         Flow[]
 
   @@unique([email])
   @@map("user")
@@ -80,4 +85,159 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ============================================
+// APP MODELS
+// ============================================
+
+enum NodeType {
+  start
+  message
+  text_input
+  choice_input
+  condition
+  set_variable
+  webhook
+  ai_block
+  wait
+  jump
+  code
+  end
+}
+
+enum VariableType {
+  string
+  number
+  boolean
+  array
+  object
+}
+
+enum SessionStatus {
+  active
+  completed
+  abandoned
+  error
+}
+
+enum MessageRole {
+  bot
+  user
+  system
+}
+
+enum ChannelType {
+  web
+  whatsapp
+  api
+}
+
+model Flow {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String       @default("Untitled Flow")
+  description       String?
+  isPublished       Boolean      @default(false)
+  publishedSnapshot Json?
+  settings          Json         @default("{}")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  nodes        FlowNode[]
+  edges        FlowEdge[]
+  variables    Variable[]
+  chatSessions ChatSession[]
+
+  @@index([userId])
+  @@map("flows")
+}
+
+model FlowNode {
+  id        String   @id @default(cuid())
+  flowId    String
+  flow      Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  type      NodeType
+  positionX Float    @default(0)
+  positionY Float    @default(0)
+  data      Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  sourceEdges  FlowEdge[]     @relation("SourceNode")
+  targetEdges  FlowEdge[]     @relation("TargetNode")
+  chatSessions ChatSession[]
+  messages     SessionMessage[]
+
+  @@index([flowId])
+  @@map("nodes")
+}
+
+model FlowEdge {
+  id           String   @id @default(cuid())
+  flowId       String
+  flow         Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  sourceNodeId String
+  sourceNode   FlowNode @relation("SourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  targetNodeId String
+  targetNode   FlowNode @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade)
+  sourceHandle String?
+  label        String?
+  createdAt    DateTime @default(now())
+
+  @@index([flowId])
+  @@index([sourceNodeId])
+  @@map("edges")
+}
+
+model Variable {
+  id           String       @id @default(cuid())
+  flowId       String
+  flow         Flow         @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  name         String
+  type         VariableType @default(string)
+  defaultValue String?
+  isSystem     Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+
+  @@unique([flowId, name])
+  @@index([flowId])
+  @@map("variables")
+}
+
+model ChatSession {
+  id             String        @id @default(cuid())
+  flowId         String
+  flow           Flow          @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  channel        ChannelType   @default(web)
+  externalId     String?
+  currentNodeId  String?
+  currentNode    FlowNode?     @relation(fields: [currentNodeId], references: [id], onDelete: SetNull)
+  variablesState Json          @default("{}")
+  status         SessionStatus @default(active)
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  messages SessionMessage[]
+
+  @@index([flowId])
+  @@index([externalId])
+  @@index([status])
+  @@map("chat_sessions")
+}
+
+model SessionMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  nodeId    String?
+  node      FlowNode?   @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+  role      MessageRole
+  content   Json
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("session_messages")
 }
