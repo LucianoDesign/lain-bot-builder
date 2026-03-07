@@ -8,19 +8,18 @@ Construir un **chat flow builder visual** (estilo Typebot) que permita crear cha
 
 ## Stack Tecnológico
 
-| Capa               | Tecnología                       | Justificación                                                     |
-| ------------------ | -------------------------------- | ----------------------------------------------------------------- |
-| Framework          | **Next.js 14+** (App Router)     | SSR, API routes, Server Actions                                   |
-| Canvas visual      | **React Flow**                   | Custom nodes, handles múltiples, minimap, usado por Typebot y n8n |
-| Estado del builder | **Zustand**                      | Liviano, sincroniza bien con React Flow, sin boilerplate          |
-| Base de datos      | **Supabase** (PostgreSQL)        | Auth, Realtime, Row Level Security, Storage                       |
-| Validación         | **Zod**                          | Schemas tipados para cada tipo de nodo                            |
-| Estilos            | **Tailwind CSS** + **shadcn/ui** | Componentes consistentes, rápidos de iterar                       |
-| Runtime            | **Node.js** (Next.js API Routes) | Ejecutor stateless del flow                                       |
+| Capa               | Tecnología                       | Justificación                                                 |
+| ------------------ | -------------------------------- | ------------------------------------------------------------- |
+| Framework          | **Next.js 15** (App Router)      | SSR/ISR, Route Handlers, Server Actions                       |
+| Auth               | **Better Auth**                  | Auth moderna para Next.js, sesiones/cookies, RBAC con plugins |
+| ORM + DB           | **Prisma + PostgreSQL**          | Modelado tipado, migraciones versionadas, queries seguras     |
+| Canvas visual      | **React Flow**                   | Custom nodes, handles múltiples, minimap                      |
+| Estado del builder | **Zustand**                      | Liviano, sincroniza bien con React Flow                       |
+| Validación         | **Zod**                          | Schemas tipados para nodos y payloads                         |
+| Estilos            | **Tailwind CSS** + **shadcn/ui** | UI consistente y rápida de iterar                             |
+| Runtime            | **Node.js** (Route Handlers)     | Ejecutor stateless del flow                                   |
 
----
-
-## Schema de Base de Datos (Supabase / PostgreSQL)
+## Schema de Base de Datos (Prisma + PostgreSQL)
 
 ### Enums
 
@@ -81,7 +80,8 @@ CREATE TYPE channel_type AS ENUM (
 -- ============================================
 CREATE TABLE flows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  -- Better Auth usa la tabla "user"; si usás IDs string/cuid, user_id debe ser TEXT.
+  user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
   name TEXT NOT NULL DEFAULT 'Untitled Flow',
   description TEXT,
   is_published BOOLEAN DEFAULT FALSE,
@@ -301,54 +301,14 @@ CREATE TRIGGER sessions_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 ```
 
-### Row Level Security (RLS)
+### Estrategia de Seguridad y Acceso (Better Auth)
 
-```sql
--- Habilitar RLS
-ALTER TABLE flows ENABLE ROW LEVEL SECURITY;
-ALTER TABLE nodes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE edges ENABLE ROW LEVEL SECURITY;
-ALTER TABLE variables ENABLE ROW LEVEL SECURITY;
-
--- Policies para flows
-CREATE POLICY "Users can CRUD own flows"
-  ON flows FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- Policies para nodes (via flow ownership)
-CREATE POLICY "Users can CRUD nodes of own flows"
-  ON nodes FOR ALL
-  USING (flow_id IN (SELECT id FROM flows WHERE user_id = auth.uid()))
-  WITH CHECK (flow_id IN (SELECT id FROM flows WHERE user_id = auth.uid()));
-
--- Policies para edges (via flow ownership)
-CREATE POLICY "Users can CRUD edges of own flows"
-  ON edges FOR ALL
-  USING (flow_id IN (SELECT id FROM flows WHERE user_id = auth.uid()))
-  WITH CHECK (flow_id IN (SELECT id FROM flows WHERE user_id = auth.uid()));
-
--- Policies para variables (via flow ownership)
-CREATE POLICY "Users can CRUD variables of own flows"
-  ON variables FOR ALL
-  USING (flow_id IN (SELECT id FROM flows WHERE user_id = auth.uid()))
-  WITH CHECK (flow_id IN (SELECT id FROM flows WHERE user_id = auth.uid()));
-
--- Sessions: acceso público para ejecución (el runtime no tiene auth de usuario editor)
-ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE session_messages ENABLE ROW LEVEL SECURITY;
-
--- El runtime usa service_role key para sessions
-CREATE POLICY "Service role full access sessions"
-  ON sessions FOR ALL
-  USING (true)
-  WITH CHECK (true);
-
-CREATE POLICY "Service role full access messages"
-  ON session_messages FOR ALL
-  USING (true)
-  WITH CHECK (true);
-```
+- No usamos RLS de Supabase.
+- La autenticación se resuelve con Better Auth (sesiones + cookies HTTP-only).
+- La autorización se resuelve con RBAC en aplicación (roles/permisos).
+- Toda query de editor debe filtrar por `user_id` (owner del flow).
+- Los endpoints públicos de runtime (`/api/execute`, webhooks) deben validar API key o firma.
+- Los secrets de integraciones (OpenAI, webhooks, etc.) se guardan server-side y nunca en el cliente.
 
 ---
 
@@ -373,6 +333,8 @@ src/
 │   │   └── [flowId]/
 │   │       └── page.tsx               -- widget de chat (preview + embed)
 │   └── api/
+│       ├── auth/
+│       │   └── [...all]/route.ts      -- Better Auth handler
 │       ├── flows/
 │       │   ├── route.ts               -- GET (list), POST (create)
 │       │   └── [flowId]/
@@ -408,11 +370,10 @@ src/
 │   │   └── ChoiceButtons.tsx          -- botones de opciones
 │   └── ui/                            -- shadcn/ui components
 ├── lib/
-│   ├── supabase/
-│   │   ├── client.ts                  -- createBrowserClient
-│   │   ├── server.ts                  -- createServerClient
-│   │   ├── admin.ts                   -- service_role client (para runtime)
-│   │   └── types.ts                   -- tipos generados de Supabase
+│   ├── auth.ts                        -- Better Auth server config
+│   ├── auth-client.ts                 -- Better Auth client helpers/hooks
+│   ├── permissions.ts                 -- RBAC (roles + access control)
+│   ├── prisma.ts                      -- PrismaClient singleton
 │   ├── engine/
 │   │   ├── executor.ts                -- lógica principal del runtime
 │   │   ├── node-handlers/             -- handler por tipo de nodo
@@ -473,7 +434,7 @@ src/
 | **WhatsApp List**     | Muestra lista interactiva (WhatsApp)   |
 | **WhatsApp Template** | Envía template aprobado                |
 | **Media**             | Envía imagen/video/documento           |
-| **Supabase Query**    | Lee/escribe directo en Supabase        |
+| **Prisma Query**      | Lee/escribe en PostgreSQL vía Prisma   |
 | **GHL Contact**       | Crea/actualiza contacto en GoHighLevel |
 
 ---
@@ -588,12 +549,13 @@ interface OutputBlock {
 
 ### Fase 1 — Fundamentos (Semana 1-2)
 
-- [ ] Setup Next.js + Tailwind + shadcn/ui
-- [ ] Configurar Supabase (schema, auth, RLS)
-- [ ] Auth pages (login/register con Supabase Auth)
+- [ x ] Setup Next.js + Tailwind + shadcn/ui
+- [ ] Configurar Prisma (schema + migraciones)
+- [ ] Configurar Better Auth (email/password + session cookies + RBAC)
+- [ ] Auth pages (login/register con Better Auth)
 - [ ] Dashboard: listar, crear, eliminar flows
 - [ ] Builder: canvas React Flow con nodos básicos (Start, Message, End)
-- [ ] Persistencia: guardar/cargar flow desde Supabase
+- [ ] Persistencia: guardar/cargar flow desde PostgreSQL con Prisma
 - [ ] Auto-save con debounce
 
 ### Fase 2 — Builder Completo (Semana 3-4)
@@ -638,9 +600,11 @@ interface OutputBlock {
 ```json
 {
   "dependencies": {
-    "next": "^14.x",
-    "@supabase/supabase-js": "^2.x",
-    "@supabase/ssr": "^0.x",
+    "next": "^15.x",
+    "react": "^19.x",
+    "react-dom": "^19.x",
+    "better-auth": "^1.x",
+    "@prisma/client": "^6.x",
     "reactflow": "^11.x",
     "zustand": "^4.x",
     "zod": "^3.x",
@@ -649,7 +613,7 @@ interface OutputBlock {
   },
   "devDependencies": {
     "typescript": "^5.x",
-    "supabase": "^1.x"
+    "prisma": "^6.x"
   }
 }
 ```
