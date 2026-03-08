@@ -66,9 +66,54 @@ export type NodeType =
   | "jump"
   | "code"
   | "end"
+  | "sticky_note"
+
+export interface StickyNoteNodeData {
+  text?: string
+  color?: "yellow" | "blue" | "green" | "pink"
+  width?: number
+  height?: number
+}
 
 export interface MessageNodeData {
   content?: Array<{ type: "text" | "image"; text?: string; url?: string }>
+}
+
+export interface TextInputNodeData {
+  question?: string
+  variableId?: string
+  placeholder?: string
+}
+
+export interface ChoiceChoice {
+  id: string
+  label: string
+}
+
+export interface ChoiceInputNodeData {
+  question?: string
+  choices?: ChoiceChoice[]
+}
+
+export type ConditionOperator =
+  | "eq"
+  | "neq"
+  | "contains"
+  | "not_contains"
+  | "gt"
+  | "lt"
+  | "is_set"
+  | "is_empty"
+
+export interface ConditionNodeData {
+  variableId?: string
+  operator?: ConditionOperator
+  value?: string
+}
+
+export interface SetVariableNodeData {
+  variableId?: string
+  value?: string
 }
 
 export type AppNodeData = Record<string, unknown>
@@ -86,12 +131,21 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error"
 // ============================================
 
 export function dbNodesToRF(dbNodes: DbFlowNode[]): AppNode[] {
-  return dbNodes.map((n) => ({
-    id: n.id,
-    type: n.type as NodeType,
-    position: { x: n.positionX, y: n.positionY },
-    data: ((n.data ?? {}) as AppNodeData),
-  }))
+  return dbNodes.map((n) => {
+    const data = (n.data ?? {}) as AppNodeData
+    const node: AppNode = {
+      id: n.id,
+      type: n.type as NodeType,
+      position: { x: n.positionX, y: n.positionY },
+      data,
+    }
+    // Restore sticky note dimensions from persisted data
+    if (n.type === "sticky_note") {
+      const d = data as StickyNoteNodeData
+      node.style = { width: d.width ?? 208, height: d.height ?? 120 }
+    }
+    return node
+  })
 }
 
 export function dbEdgesToRF(dbEdges: DbFlowEdge[]): AppEdge[] {

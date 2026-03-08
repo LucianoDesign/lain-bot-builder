@@ -2,7 +2,7 @@ import { z } from "zod"
 import type { NodeType } from "@/app/generated/prisma/client"
 import type { AppEdge, AppNode } from "@/lib/types"
 
-const nodeTypeSchema = z.enum([
+export const nodeTypeSchema = z.enum([
   "start",
   "message",
   "text_input",
@@ -15,6 +15,7 @@ const nodeTypeSchema = z.enum([
   "jump",
   "code",
   "end",
+  "sticky_note",
 ])
 
 const flowNodeSchema = z.object({

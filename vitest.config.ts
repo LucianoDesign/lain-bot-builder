@@ -8,8 +8,15 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "node",
-    include: ["lib/**/*.test.ts"],
+    setupFiles: ["./vitest.setup.ts"],
+    environment: "jsdom",
+    include: [
+      "lib/**/*.test.ts",
+      "components/**/*.test.ts",
+      "components/**/*.test.tsx",
+      "app/**/*.test.ts",
+      "app/**/*.test.tsx",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

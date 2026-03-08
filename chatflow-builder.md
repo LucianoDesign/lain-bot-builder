@@ -549,24 +549,31 @@ interface OutputBlock {
 
 ### Fase 1 — Fundamentos (Semana 1-2)
 
-- [ x ] Setup Next.js + Tailwind + shadcn/ui
-- [ x ] Configurar Prisma (schema + migraciones)
-- [ x ] Configurar Better Auth (email/password + session cookies + RBAC)
-- [ x ] Auth pages (login/register con Better Auth)
-- [ x ] Dashboard: listar, crear, eliminar flows
-- [ x ] Builder: canvas React Flow con nodos básicos (Start, Message, End)
-- [ x ] Persistencia: guardar/cargar flow desde PostgreSQL con Prisma
-- [ x ] Auto-save con debounce
+- [x] ~~Setup Next.js + Tailwind + shadcn/ui~~
+- [x] ~~Configurar Prisma (schema + migraciones)~~
+- [x] ~~Configurar Better Auth (email/password + session cookies + RBAC)~~
+- [x] ~~Auth pages (login/register con Better Auth)~~
+- [x] ~~Dashboard: listar, crear, eliminar flows~~
+- [x] ~~Builder: canvas React Flow con nodos básicos (Start, Message, End)~~
+- [x] ~~Persistencia: guardar/cargar flow desde PostgreSQL con Prisma~~
+- [x] ~~Auto-save con debounce~~
 
 ### Fase 2 — Builder Completo (Semana 3-4)
 
-- [ ] Nodos: Text Input, Choice Input, Condition, Set Variable
-- [ ] Panel de configuración por tipo de nodo
-- [ ] Sistema de variables (CRUD + interpolación {{var}})
+- [x] ~~Nodos: Text Input, Choice Input, Condition, Set Variable~~
+- [x] ~~Panel de configuración por tipo de nodo~~
+- [x] ~~Sistema de variables (CRUD + interpolación {{var}})~~
+- [x] ~~Undo/Redo (Ctrl+Z / Ctrl+Y)~~
+- [x] ~~Minimap, controles de zoom~~
+- [x] ~~Eliminar nodo (botón en nodo + botón en config panel)~~
+- [x] ~~Multi-select por drag (click izquierdo arrastra selección)~~
+- [x] ~~Context menu derecho (tidy up, select all, clear selection)~~
+- [x] ~~Tidy up workflow (auto-layout BFS por capas)~~
+- [x] ~~Copy/paste de nodos (click derecho → Copy / Paste; Paste en posición del cursor)~~
+- [x] ~~Delete de nodo via click derecho (node context menu)~~
 - [ ] Validación de conexiones (ej: Start solo tiene output, End solo tiene input)
-- [ ] Undo/Redo
-- [ ] Minimap, controles de zoom
-- [ ] Copy/paste de nodos
+- [x] ~~Capacidad de eliminar conexiones (hover sobre edge → trash icon)~~
+- [x] ~~Sticky notes (nodo decorativo con edición inline, 4 colores)~~
 
 ### Fase 3 — Runtime + Chat Widget (Semana 5-6)
 

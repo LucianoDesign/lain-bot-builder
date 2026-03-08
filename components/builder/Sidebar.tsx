@@ -10,6 +10,14 @@ interface NodeItem {
   description: string
 }
 
+const STICKY_NOTE: NodeItem = {
+  type: "sticky_note",
+  label: "Sticky Note",
+  color: "border-yellow-700 text-yellow-400",
+  icon: "📝",
+  description: "Add a canvas note",
+}
+
 const MVP_NODES: NodeItem[] = [
   {
     type: "message",
@@ -55,6 +63,28 @@ const MVP_NODES: NodeItem[] = [
   },
 ]
 
+function NodeItem({
+  node,
+  onDragStart,
+}: {
+  node: NodeItem
+  onDragStart: (e: React.DragEvent, type: string) => void
+}) {
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, node.type)}
+      className={`flex cursor-grab items-center gap-2.5 rounded-md border bg-zinc-900/50 px-2.5 py-2 transition-colors hover:bg-zinc-800 active:cursor-grabbing ${node.color}`}
+    >
+      <span className="text-sm">{node.icon}</span>
+      <div>
+        <p className="text-xs font-medium text-zinc-200">{node.label}</p>
+        <p className="text-[10px] text-zinc-500">{node.description}</p>
+      </div>
+    </div>
+  )
+}
+
 export function Sidebar() {
   function onDragStart(e: React.DragEvent, nodeType: string) {
     e.dataTransfer.setData("application/reactflow", nodeType)
@@ -71,19 +101,10 @@ export function Sidebar() {
       <Separator className="bg-zinc-800" />
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {MVP_NODES.map((node) => (
-          <div
-            key={node.type}
-            draggable
-            onDragStart={(e) => onDragStart(e, node.type)}
-            className={`flex cursor-grab items-center gap-2.5 rounded-md border bg-zinc-900/50 px-2.5 py-2 transition-colors hover:bg-zinc-800 active:cursor-grabbing ${node.color}`}
-          >
-            <span className="text-sm">{node.icon}</span>
-            <div>
-              <p className="text-xs font-medium text-zinc-200">{node.label}</p>
-              <p className="text-[10px] text-zinc-500">{node.description}</p>
-            </div>
-          </div>
+          <NodeItem key={node.type} node={node} onDragStart={onDragStart} />
         ))}
+        <Separator className="my-2 bg-zinc-800" />
+        <NodeItem node={STICKY_NOTE} onDragStart={onDragStart} />
       </div>
     </aside>
   )

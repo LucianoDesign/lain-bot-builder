@@ -1,8 +1,11 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, Position, type NodeProps } from "@xyflow/react"
+import { NodeWrapper } from "./NodeWrapper"
 
-export function StartNode({ selected }: NodeProps) {
+export function StartNode({ id, selected }: NodeProps) {
   return (
-    <div
+    <NodeWrapper
+      id={id}
+      selected={selected}
       className={`w-40 rounded-lg border-2 bg-zinc-900 px-3 py-2.5 shadow-md transition-colors ${
         selected ? "border-emerald-500" : "border-emerald-700"
       }`}
@@ -19,6 +22,6 @@ export function StartNode({ selected }: NodeProps) {
         position={Position.Bottom}
         className="h-2.5 w-2.5 border-2 border-zinc-700 bg-zinc-900"
       />
-    </div>
-  );
+    </NodeWrapper>
+  )
 }

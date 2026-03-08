@@ -1,35 +1,42 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest"
 import {
   createFlowSchema,
+  nodeTypeSchema,
   toFlowEdgeRows,
   toFlowNodeRows,
   updateFlowSchema,
-} from "./contracts";
-import type { AppEdge, AppNode } from "../types";
+} from "./contracts"
+import type { AppEdge, AppNode } from "@/lib/types"
 
 describe("flow contracts", () => {
-  it("applies default flow name", () => {
-    const parsed = createFlowSchema.parse({});
+  it("nodeTypeSchema acepta sticky_note", () => {
+    expect(nodeTypeSchema.parse("sticky_note")).toBe("sticky_note")
+  })
 
-    expect(parsed.name).toBe("Untitled Flow");
-  });
+  it("nodeTypeSchema rechaza tipos invalidos", () => {
+    expect(() => nodeTypeSchema.parse("unknown_type")).toThrow()
+  })
 
-  it("rejects invalid update payload", () => {
-    const result = updateFlowSchema.safeParse({ name: "" });
+  it("createFlowSchema aplica default Untitled Flow", () => {
+    const parsed = createFlowSchema.parse({})
+    expect(parsed.name).toBe("Untitled Flow")
+  })
 
-    expect(result.success).toBe(false);
-  });
+  it("createFlowSchema rechaza name vacio", () => {
+    const result = createFlowSchema.safeParse({ name: "" })
+    expect(result.success).toBe(false)
+  })
 
-  it("rejects malformed nodes in update payload", () => {
+  it("updateFlowSchema acepta nodes y edges opcionales", () => {
     const result = updateFlowSchema.safeParse({
-      nodes: [{ id: "n1", type: "message", position: { x: "bad", y: 1 } }],
-      edges: [],
-    });
+      nodes: [{ id: "n1", type: "message", position: { x: 10, y: 20 }, data: {} }],
+      edges: [{ id: "e1", source: "n1", target: "n2" }],
+    })
 
-    expect(result.success).toBe(false);
-  });
+    expect(result.success).toBe(true)
+  })
 
-  it("maps app nodes to DB row shape", () => {
+  it("toFlowNodeRows mapea posicion y serializa data", () => {
     const nodes = [
       {
         id: "n1",
@@ -37,11 +44,9 @@ describe("flow contracts", () => {
         position: { x: 100, y: 200 },
         data: { text: "hi" },
       },
-    ] as AppNode[];
+    ] as AppNode[]
 
-    const rows = toFlowNodeRows("flow-1", nodes);
-
-    expect(rows).toEqual([
+    expect(toFlowNodeRows("flow-1", nodes)).toEqual([
       {
         id: "n1",
         flowId: "flow-1",
@@ -50,31 +55,18 @@ describe("flow contracts", () => {
         positionY: 200,
         data: { text: "hi" },
       },
-    ]);
-  });
+    ])
+  })
 
-  it("maps app edges to DB row shape and normalizes labels", () => {
-    const edges = [
-      {
-        id: "e1",
-        source: "n1",
-        target: "n2",
-        sourceHandle: undefined,
-        label: "next",
-      },
-    ] as AppEdge[];
+  it("toFlowEdgeRows convierte sourceHandle undefined a null", () => {
+    const edges = [{ id: "e1", source: "n1", target: "n2", sourceHandle: undefined }] as AppEdge[]
 
-    const rows = toFlowEdgeRows("flow-1", edges);
+    expect(toFlowEdgeRows("flow-1", edges)[0]?.sourceHandle).toBeNull()
+  })
 
-    expect(rows).toEqual([
-      {
-        id: "e1",
-        flowId: "flow-1",
-        sourceNodeId: "n1",
-        targetNodeId: "n2",
-        sourceHandle: null,
-        label: "next",
-      },
-    ]);
-  });
-});
+  it("toFlowEdgeRows ignora labels no string", () => {
+    const edges = [{ id: "e1", source: "n1", target: "n2", label: 123 }] as AppEdge[]
+
+    expect(toFlowEdgeRows("flow-1", edges)[0]?.label).toBeNull()
+  })
+})

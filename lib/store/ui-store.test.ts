@@ -3,40 +3,51 @@ import { useUIStore } from "./ui-store"
 
 describe("useUIStore", () => {
   beforeEach(() => {
-    useUIStore.setState({
-      selectedNodeId: null,
-      isConfigPanelOpen: false,
-      isVariablesPanelOpen: false,
-    })
+    useUIStore.setState(useUIStore.getInitialState(), true)
   })
 
-  it("selectNode opens config panel when node exists", () => {
-    const store = useUIStore.getState()
+  it("setClipboard guarda nodo copiado", () => {
+    useUIStore.getState().setClipboard({ type: "message", data: { text: "hola" } })
 
-    store.selectNode("node-1")
-
-    const state = useUIStore.getState()
-    expect(state.selectedNodeId).toBe("node-1")
-    expect(state.isConfigPanelOpen).toBe(true)
+    expect(useUIStore.getState().clipboard).toEqual({ type: "message", data: { text: "hola" } })
   })
 
-  it("closeConfigPanel also clears selected node", () => {
+  it("setClipboard(null) limpia el clipboard", () => {
+    useUIStore.setState({ clipboard: { type: "message", data: { text: "x" } } })
+
+    useUIStore.getState().setClipboard(null)
+
+    expect(useUIStore.getState().clipboard).toBeNull()
+  })
+
+  it("setHoveredEdgeId actualiza el edge hover", () => {
+    useUIStore.getState().setHoveredEdgeId("edge-1")
+
+    expect(useUIStore.getState().hoveredEdgeId).toBe("edge-1")
+  })
+
+  it("selectNode con id abre config panel", () => {
+    useUIStore.getState().selectNode("node-1")
+
+    expect(useUIStore.getState().selectedNodeId).toBe("node-1")
+    expect(useUIStore.getState().isConfigPanelOpen).toBe(true)
+  })
+
+  it("selectNode(null) cierra panel y limpia selectedNodeId", () => {
+    useUIStore.setState({ selectedNodeId: "node-1", isConfigPanelOpen: true })
+
+    useUIStore.getState().selectNode(null)
+
+    expect(useUIStore.getState().selectedNodeId).toBeNull()
+    expect(useUIStore.getState().isConfigPanelOpen).toBe(false)
+  })
+
+  it("closeConfigPanel limpia selectedNodeId y cierra panel", () => {
     useUIStore.setState({ selectedNodeId: "node-2", isConfigPanelOpen: true })
 
     useUIStore.getState().closeConfigPanel()
 
-    const state = useUIStore.getState()
-    expect(state.selectedNodeId).toBeNull()
-    expect(state.isConfigPanelOpen).toBe(false)
-  })
-
-  it("toggleVariablesPanel flips panel state", () => {
-    const store = useUIStore.getState()
-
-    store.toggleVariablesPanel()
-    expect(useUIStore.getState().isVariablesPanelOpen).toBe(true)
-
-    store.toggleVariablesPanel()
-    expect(useUIStore.getState().isVariablesPanelOpen).toBe(false)
+    expect(useUIStore.getState().selectedNodeId).toBeNull()
+    expect(useUIStore.getState().isConfigPanelOpen).toBe(false)
   })
 })

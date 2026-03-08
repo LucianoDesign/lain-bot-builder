@@ -104,6 +104,7 @@ enum NodeType {
   jump
   code
   end
+  sticky_note
 }
 
 enum VariableType {
