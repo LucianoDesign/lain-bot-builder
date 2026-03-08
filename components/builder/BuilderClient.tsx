@@ -10,7 +10,7 @@ import { VariablesPanel } from "./VariablesPanel"
 import { useFlow } from "@/hooks/useFlow"
 import { useAutoSave } from "@/hooks/useAutoSave"
 import { useFlowStore } from "@/lib/store/flow-store"
-import { useVariablesStore } from "@/lib/store/variables-store"
+import { useVariablesStore, type FlowVariable } from "@/lib/store/variables-store"
 import type { DbFlow } from "@/lib/types"
 
 interface BuilderClientProps {
@@ -25,17 +25,11 @@ function BuilderInner({ flow }: BuilderClientProps) {
 
   useAutoSave(flow.id)
 
-  // Load variables
-  const { setVariables, setLoading } = useVariablesStore()
+  // Initialize variables from server-loaded props
+  const { setVariables } = useVariablesStore()
   useEffect(() => {
-    setLoading(true)
-    fetch(`/api/flows/${flow.id}/variables`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) setVariables(data)
-      })
-      .finally(() => setLoading(false))
-  }, [flow.id, setVariables, setLoading])
+    if (flow.variables) setVariables(flow.variables as FlowVariable[])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keyboard shortcuts for undo/redo
   const undo = useFlowStore((s) => s.undo)

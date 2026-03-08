@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { useFlowStore } from "@/lib/store/flow-store"
+import { saveFlow } from "@/app/actions/flows"
 
 const DEBOUNCE_MS = 1500
 
@@ -25,13 +26,8 @@ export function useAutoSave(flowId: string) {
 
     timerRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/flows/${flowId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nodes, edges }),
-        })
-
-        if (!res.ok) throw new Error("Save failed")
+        const result = await saveFlow(flowId, nodes, edges)
+        if ("error" in result) throw new Error(String(result.error))
 
         markClean()
         setSaveStatus("saved")

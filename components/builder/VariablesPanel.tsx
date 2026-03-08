@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { IconTrash, IconPlus } from "@tabler/icons-react"
 import { toast } from "sonner"
+import { createVariable, deleteVariable } from "@/app/actions/variables"
 
 interface VariablesPanelProps {
   flowId: string
@@ -36,43 +37,33 @@ export function VariablesPanel({ flowId }: VariablesPanelProps) {
     if (!name.trim()) return
     setCreating(true)
     try {
-      const res = await fetch(`/api/flows/${flowId}/variables`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), type, defaultValue: defaultValue || null }),
+      const result = await createVariable(flowId, {
+        name: name.trim(),
+        type,
+        defaultValue: defaultValue || null,
       })
-      if (!res.ok) {
-        const data = await res.json()
-        toast.error(data.error ?? "Failed to create variable")
+      if ("error" in result) {
+        toast.error(typeof result.error === "string" ? result.error : "Failed to create variable")
         return
       }
-      const v = await res.json()
-      addVariable(v)
+      addVariable(result.variable as FlowVariable)
       setName("")
       setDefaultValue("")
       setType("string")
-      toast.success(`Variable "${v.name}" created`)
-    } catch {
-      toast.error("Network error")
+      toast.success(`Variable "${result.variable.name}" created`)
     } finally {
       setCreating(false)
     }
   }
 
   async function handleDelete(v: FlowVariable) {
-    try {
-      const res = await fetch(`/api/flows/${flowId}/variables/${v.id}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) {
-        toast.error("Failed to delete variable")
-        return
-      }
-      removeVariable(v.id)
-      toast.success(`Variable "${v.name}" deleted`)
-    } catch {
-      toast.error("Network error")
+    const result = await deleteVariable(flowId, v.id)
+    if ("error" in result) {
+      toast.error("Failed to delete variable")
+      return
     }
+    removeVariable(v.id)
+    toast.success(`Variable "${v.name}" deleted`)
   }
 
   return (

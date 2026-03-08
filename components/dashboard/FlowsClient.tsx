@@ -26,6 +26,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import type { DbFlow } from "@/lib/types";
+import { createFlow, deleteFlow } from "@/app/actions/flows";
 
 interface FlowsClientProps {
   flows: DbFlow[];
@@ -42,25 +43,20 @@ export function FlowsClient({ flows: initialFlows }: FlowsClientProps) {
     e.preventDefault();
     setCreating(true);
 
-    const res = await fetch("/api/flows", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName || "Untitled Flow" }),
-    });
+    const result = await createFlow(newName || "Untitled Flow");
 
-    if (res.ok) {
-      const flow = await res.json();
+    if (result.flow) {
       setCreateOpen(false);
       setNewName("");
-      router.push(`/builder/${flow.id}`);
+      router.push(`/builder/${result.flow.id}`);
     }
 
     setCreating(false);
   }
 
   async function handleDelete(flowId: string) {
-    const res = await fetch(`/api/flows/${flowId}`, { method: "DELETE" });
-    if (res.ok) {
+    const result = await deleteFlow(flowId);
+    if (result.success) {
       setFlows((prev) => prev.filter((f) => f.id !== flowId));
     }
   }
