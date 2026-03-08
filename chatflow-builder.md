@@ -575,18 +575,19 @@ interface OutputBlock {
 - [x] ~~Capacidad de eliminar conexiones (hover sobre edge → trash icon)~~
 - [x] ~~Sticky notes (nodo decorativo con edición inline, 4 colores)~~
 
-### Fase 3 — Runtime + Chat Widget (Semana 5-6)
-
-- [ ] Runtime engine (executor + node handlers + resolver)
-- [ ] API endpoint: POST /api/execute
-- [ ] Chat widget web (preview en el builder)
-- [ ] Chat widget embebible (iframe + script tag)
-- [ ] Typing indicators y delays
+### Fase 3 — Core y Runtime (Semana 5-6)
+- [ ] Webhook node (Start node) back-bot.lain.ar?flowid=asdasd123412&schema=chatwoot_wp
+- [ ] Input node (text, number): Agregar validaciones segun tipo de input
+- [ ] Invalid input Event node
+- [ ] Panel de configuración por flujo. Ej: Selector de schema (chatwoot whatsapp) + campos predefinidos (waba_key, waba_phoneId)
+- [ ] Runtime engine (executor + node handlers + resolver) (Desarrollada externamente)
+- [ ] API endpoint: POST /api/execute (Esta api sera desarrollada externamente)
 - [ ] Publish flow (snapshot)
 
-### Fase 4 — Features Avanzados (Semana 7-8)
 
-- [ ] Webhook node
+### Fase 4 — Features Avanzados (Semana 7-8)
+- [ ] Agregar a nodos que correspondan, outputs de prueba para el simulador. 
+- [ ] Simulador de conversaciones
 - [ ] AI Block node (integración con OpenAI/Anthropic)
 - [ ] Code node (sandbox JS)
 - [ ] Analytics básico (sesiones, completions, drop-offs)
