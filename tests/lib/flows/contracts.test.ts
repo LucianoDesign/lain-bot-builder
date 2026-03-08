@@ -5,7 +5,7 @@ import {
   toFlowEdgeRows,
   toFlowNodeRows,
   updateFlowSchema,
-} from "./contracts"
+} from "@/lib/flows/contracts"
 import type { AppEdge, AppNode } from "@/lib/types"
 
 describe("flow contracts", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { dbEdgesToRF, dbNodesToRF, type DbFlowEdge, type DbFlowNode } from "./index"
+import { dbEdgesToRF, dbNodesToRF, type DbFlowEdge, type DbFlowNode } from "@/lib/types"
 
 describe("dbNodesToRF", () => {
   it("convierte posicion correctamente para nodos normales", () => {

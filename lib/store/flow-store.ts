@@ -7,7 +7,7 @@ import {
   type EdgeChange,
   type Connection,
 } from "@xyflow/react"
-import type { AppNode, AppEdge, SaveStatus } from "@/lib/types"
+import type { AppNode, AppEdge, SaveStatus, FlowSettings } from "@/lib/types"
 
 interface HistoryEntry {
   nodes: AppNode[]
@@ -15,6 +15,10 @@ interface HistoryEntry {
 }
 
 interface FlowStore {
+  // Flow metadata
+  flowId: string
+  isPublished: boolean
+  flowSettings: FlowSettings
   // React Flow state
   nodes: AppNode[]
   edges: AppEdge[]
@@ -27,6 +31,9 @@ interface FlowStore {
   future: HistoryEntry[]
 
   // Actions
+  setFlowMeta: (meta: { flowId: string; isPublished: boolean; flowSettings: FlowSettings }) => void
+  setIsPublished: (isPublished: boolean) => void
+  updateFlowSettings: (settings: FlowSettings) => void
   setNodes: (nodes: AppNode[]) => void
   setEdges: (edges: AppEdge[]) => void
   onNodesChange: (changes: NodeChange<AppNode>[]) => void
@@ -41,12 +48,20 @@ interface FlowStore {
 }
 
 export const useFlowStore = create<FlowStore>((set, get) => ({
+  flowId: "",
+  isPublished: false,
+  flowSettings: {},
   nodes: [],
   edges: [],
   saveStatus: "idle",
   isDirty: false,
   history: [],
   future: [],
+
+  setFlowMeta: ({ flowId, isPublished, flowSettings }) =>
+    set({ flowId, isPublished, flowSettings }),
+  setIsPublished: (isPublished) => set({ isPublished }),
+  updateFlowSettings: (flowSettings) => set({ flowSettings }),
 
   setNodes: (nodes) => set({ nodes, isDirty: false }),
   setEdges: (edges) => set({ edges, isDirty: false }),

@@ -2,9 +2,9 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import React from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { StickyNoteNode } from "./StickyNoteNode"
-import { useFlowStore } from "../../lib/store/flow-store"
-import { useUIStore } from "../../lib/store/ui-store"
+import { StickyNoteNode } from "@/components/nodes/StickyNoteNode"
+import { useFlowStore } from "@/lib/store/flow-store"
+import { useUIStore } from "@/lib/store/ui-store"
 
 const mocks = vi.hoisted(() => ({
   deleteElements: vi.fn(),

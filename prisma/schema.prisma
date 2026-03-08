@@ -105,6 +105,7 @@ enum NodeType {
   code
   end
   sticky_note
+  invalid_input
 }
 
 enum VariableType {

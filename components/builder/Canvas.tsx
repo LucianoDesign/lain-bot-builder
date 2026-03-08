@@ -22,6 +22,7 @@ import { ChoiceInputNode } from "@/components/nodes/ChoiceInputNode"
 import { ConditionNode } from "@/components/nodes/ConditionNode"
 import { SetVariableNode } from "@/components/nodes/SetVariableNode"
 import { StickyNoteNode } from "@/components/nodes/StickyNoteNode"
+import { InvalidInputNode } from "@/components/nodes/InvalidInputNode"
 import { DeletableEdge } from "@/components/edges/DeletableEdge"
 import { CanvasContextMenu } from "./CanvasContextMenu"
 import { NodeContextMenu } from "./NodeContextMenu"
@@ -36,6 +37,7 @@ const nodeTypes = {
   condition: ConditionNode,
   set_variable: SetVariableNode,
   sticky_note: StickyNoteNode,
+  invalid_input: InvalidInputNode,
 }
 
 const edgeTypes = {
@@ -49,6 +51,7 @@ const initialNodeData: Record<string, AppNode["data"]> = {
   condition: { variableId: undefined, operator: "eq", value: "" },
   set_variable: { variableId: undefined, value: "" },
   sticky_note: { text: "", color: "yellow" },
+  invalid_input: {},
 }
 
 let nodeCounter = Date.now()

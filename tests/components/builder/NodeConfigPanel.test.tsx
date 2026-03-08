@@ -2,11 +2,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NodeConfigPanel } from "./NodeConfigPanel";
-import { useFlowStore } from "../../lib/store/flow-store";
-import { useUIStore } from "../../lib/store/ui-store";
-import { useVariablesStore } from "../../lib/store/variables-store";
-import type { AppNode } from "../../lib/types";
+import { NodeConfigPanel } from "@/components/builder/NodeConfigPanel";
+import { useFlowStore } from "@/lib/store/flow-store";
+import { useUIStore } from "@/lib/store/ui-store";
+import { useVariablesStore } from "@/lib/store/variables-store";
+import type { AppNode } from "@/lib/types";
 
 const mocks = vi.hoisted(() => ({
   deleteElements: vi.fn(),
@@ -192,8 +192,14 @@ describe("NodeConfigPanel", () => {
     ).toBeInTheDocument();
   });
 
-  it("start y end muestran mensaje de no configurable", () => {
+  it("start muestra la webhook URL", () => {
+    useFlowStore.setState({ flowId: "flow-123", flowSettings: { schema: "chatwoot_wp" } }, false);
     renderPanel(baseNode({ type: "start", data: {} }));
+    expect(screen.getByText("Webhook URL")).toBeInTheDocument();
+  });
+
+  it("end muestra mensaje de no configurable", () => {
+    renderPanel(baseNode({ type: "end", data: {} }));
     expect(screen.getByText(/no configurable properties/i)).toBeInTheDocument();
   });
 });

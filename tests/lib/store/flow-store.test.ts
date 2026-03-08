@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { useFlowStore } from "./flow-store"
+import { useFlowStore } from "@/lib/store/flow-store"
 import type { AppEdge, AppNode } from "@/lib/types"
 
 function node(id: string, x = 0, y = 0): AppNode {

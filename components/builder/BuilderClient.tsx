@@ -7,11 +7,12 @@ import { Sidebar } from "./Sidebar"
 import { Toolbar } from "./Toolbar"
 import { NodeConfigPanel } from "./NodeConfigPanel"
 import { VariablesPanel } from "./VariablesPanel"
+import { FlowSettingsPanel } from "./FlowSettingsPanel"
 import { useFlow } from "@/hooks/useFlow"
 import { useAutoSave } from "@/hooks/useAutoSave"
 import { useFlowStore } from "@/lib/store/flow-store"
 import { useVariablesStore, type FlowVariable } from "@/lib/store/variables-store"
-import type { DbFlow } from "@/lib/types"
+import type { DbFlow, FlowSettings } from "@/lib/types"
 
 interface BuilderClientProps {
   flow: DbFlow
@@ -29,6 +30,16 @@ function BuilderInner({ flow }: BuilderClientProps) {
   const { setVariables } = useVariablesStore()
   useEffect(() => {
     if (flow.variables) setVariables(flow.variables as FlowVariable[])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Initialize flow metadata in store
+  const { setFlowMeta } = useFlowStore()
+  useEffect(() => {
+    setFlowMeta({
+      flowId: flow.id,
+      isPublished: flow.isPublished,
+      flowSettings: (flow.settings as FlowSettings) ?? {},
+    })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keyboard shortcuts for undo/redo
@@ -63,6 +74,7 @@ function BuilderInner({ flow }: BuilderClientProps) {
         <NodeConfigPanel />
       </div>
       <VariablesPanel flowId={flow.id} />
+      <FlowSettingsPanel flowId={flow.id} />
     </div>
   )
 }

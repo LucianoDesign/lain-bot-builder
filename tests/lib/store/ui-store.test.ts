@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { useUIStore } from "./ui-store"
+import { useUIStore } from "@/lib/store/ui-store"
 
 describe("useUIStore", () => {
   beforeEach(() => {

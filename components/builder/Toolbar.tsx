@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { useFlowStore } from "@/lib/store/flow-store"
 import { useUIStore } from "@/lib/store/ui-store"
@@ -12,20 +13,35 @@ import {
   IconArrowBackUp,
   IconArrowForwardUp,
   IconVariable,
+  IconSettings,
+  IconWorldUpload,
 } from "@tabler/icons-react"
+import { publishFlow } from "@/app/actions/flows"
 
 interface ToolbarProps {
   flowId: string
   flowName: string
 }
 
-export function Toolbar({ flowName }: ToolbarProps) {
+export function Toolbar({ flowId, flowName }: ToolbarProps) {
   const saveStatus = useFlowStore((s) => s.saveStatus)
   const history = useFlowStore((s) => s.history)
   const future = useFlowStore((s) => s.future)
+  const isPublished = useFlowStore((s) => s.isPublished)
+  const setIsPublished = useFlowStore((s) => s.setIsPublished)
   const undo = useFlowStore((s) => s.undo)
   const redo = useFlowStore((s) => s.redo)
-  const { toggleVariablesPanel } = useUIStore()
+  const { toggleVariablesPanel, toggleFlowSettingsPanel } = useUIStore()
+  const [publishing, setPublishing] = useState(false)
+
+  async function handlePublish() {
+    setPublishing(true)
+    const result = await publishFlow(flowId)
+    setPublishing(false)
+    if (!("error" in result)) {
+      setIsPublished(true)
+    }
+  }
 
   const statusLabel = {
     idle: null,
@@ -86,17 +102,42 @@ export function Toolbar({ flowName }: ToolbarProps) {
         Variables
       </Button>
 
+      {/* Flow Settings */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleFlowSettingsPanel}
+        className="h-7 gap-1.5 px-2 text-xs text-zinc-400 hover:text-zinc-200"
+        title="Flow Settings"
+      >
+        <IconSettings size={13} />
+        Settings
+      </Button>
+
       <div className="flex-1" />
 
-      {statusLabel && (
-        <span className="text-xs">{statusLabel}</span>
-      )}
+      {statusLabel && <span className="text-xs">{statusLabel}</span>}
+
+      {/* Publish */}
+      <Button
+        size="sm"
+        onClick={handlePublish}
+        disabled={publishing}
+        className="h-7 gap-1.5 px-3 text-xs bg-emerald-700 text-white hover:bg-emerald-600 disabled:opacity-50"
+      >
+        <IconWorldUpload size={13} />
+        {publishing ? "Publishing..." : isPublished ? "Re-publish" : "Publish"}
+      </Button>
 
       <Badge
         variant="secondary"
-        className="bg-zinc-800 text-zinc-500 hover:bg-zinc-800 text-[11px]"
+        className={`text-[11px] ${
+          isPublished
+            ? "bg-emerald-900/30 text-emerald-500 hover:bg-emerald-900/30"
+            : "bg-zinc-800 text-zinc-500 hover:bg-zinc-800"
+        }`}
       >
-        Draft
+        {isPublished ? "Published" : "Draft"}
       </Badge>
     </header>
   )
