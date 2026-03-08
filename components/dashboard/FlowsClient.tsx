@@ -1,62 +1,67 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react"
-import type { DbFlow } from "@/lib/types"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  IconPlus,
+  IconDotsVertical,
+  IconPencil,
+  IconTrash,
+} from "@tabler/icons-react";
+import type { DbFlow } from "@/lib/types";
 
 interface FlowsClientProps {
-  flows: DbFlow[]
+  flows: DbFlow[];
 }
 
 export function FlowsClient({ flows: initialFlows }: FlowsClientProps) {
-  const router = useRouter()
-  const [flows, setFlows] = useState(initialFlows)
-  const [createOpen, setCreateOpen] = useState(false)
-  const [newName, setNewName] = useState("")
-  const [creating, setCreating] = useState(false)
+  const router = useRouter();
+  const [flows, setFlows] = useState(initialFlows);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
-    setCreating(true)
+    e.preventDefault();
+    setCreating(true);
 
     const res = await fetch("/api/flows", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newName || "Untitled Flow" }),
-    })
+    });
 
     if (res.ok) {
-      const flow = await res.json()
-      setCreateOpen(false)
-      setNewName("")
-      router.push(`/builder/${flow.id}`)
+      const flow = await res.json();
+      setCreateOpen(false);
+      setNewName("");
+      router.push(`/builder/${flow.id}`);
     }
 
-    setCreating(false)
+    setCreating(false);
   }
 
   async function handleDelete(flowId: string) {
-    const res = await fetch(`/api/flows/${flowId}`, { method: "DELETE" })
+    const res = await fetch(`/api/flows/${flowId}`, { method: "DELETE" });
     if (res.ok) {
-      setFlows((prev) => prev.filter((f) => f.id !== flowId))
+      setFlows((prev) => prev.filter((f) => f.id !== flowId));
     }
   }
 
@@ -147,17 +152,11 @@ export function FlowsClient({ flows: initialFlows }: FlowsClientProps) {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
 
-function FlowCard({
-  flow,
-  onDelete,
-}: {
-  flow: DbFlow
-  onDelete: () => void
-}) {
-  const router = useRouter()
+function FlowCard({ flow, onDelete }: { flow: DbFlow; onDelete: () => void }) {
+  const router = useRouter();
 
   return (
     <div className="group relative rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-colors hover:border-zinc-700">
@@ -165,7 +164,9 @@ function FlowCard({
         <div className="flex-1 min-w-0">
           <h3 className="truncate font-medium text-zinc-100">{flow.name}</h3>
           {flow.description && (
-            <p className="mt-0.5 truncate text-xs text-zinc-500">{flow.description}</p>
+            <p className="mt-0.5 truncate text-xs text-zinc-500">
+              {flow.description}
+            </p>
           )}
         </div>
         <DropdownMenu>
@@ -212,7 +213,11 @@ function FlowCard({
           {flow.isPublished ? "Published" : "Draft"}
         </Badge>
         <span className="text-[11px] text-zinc-600">
-          {new Date(flow.updatedAt).toLocaleDateString()}
+          {new Date(flow.updatedAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
         </span>
       </div>
 
@@ -223,5 +228,5 @@ function FlowCard({
         aria-label={`Open ${flow.name}`}
       />
     </div>
-  )
+  );
 }

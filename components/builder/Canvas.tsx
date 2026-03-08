@@ -57,10 +57,13 @@ const getNewId = () => `node_${nodeCounter++}`
 // ─── Tidy-up layout ──────────────────────────────────────────────────────────
 
 function applyTidyLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
+  const stickyNotes = nodes.filter((n) => n.type === "sticky_note")
+  const layoutNodes = nodes.filter((n) => n.type !== "sticky_note")
+
   const outgoing = new Map<string, string[]>()
   const inDegree = new Map<string, number>()
 
-  for (const n of nodes) {
+  for (const n of layoutNodes) {
     outgoing.set(n.id, [])
     inDegree.set(n.id, 0)
   }
@@ -72,7 +75,7 @@ function applyTidyLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
   const level = new Map<string, number>()
   const queue: string[] = []
 
-  for (const n of nodes) {
+  for (const n of layoutNodes) {
     if ((inDegree.get(n.id) ?? 0) === 0) {
       level.set(n.id, 0)
       queue.push(n.id)
@@ -90,7 +93,7 @@ function applyTidyLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
     }
   }
 
-  for (const n of nodes) {
+  for (const n of layoutNodes) {
     if (!level.has(n.id)) level.set(n.id, 0)
   }
 
@@ -99,6 +102,10 @@ function applyTidyLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
     if (!byLevel.has(lv)) byLevel.set(lv, [])
     byLevel.get(lv)!.push(id)
   }
+
+  // Centroide original de los nodos a layoutear
+  const origCx = layoutNodes.reduce((s, n) => s + n.position.x, 0) / layoutNodes.length
+  const origCy = layoutNodes.reduce((s, n) => s + n.position.y, 0) / layoutNodes.length
 
   const X_GAP = 240
   const Y_GAP = 150
@@ -111,10 +118,22 @@ function applyTidyLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
     })
   }
 
-  return nodes.map((n) => ({
-    ...n,
-    position: positions.get(n.id) ?? n.position,
-  }))
+  // Centroide del nuevo layout (centrado en 0,0) → trasladar al centroide original
+  const newPositions = Array.from(positions.values())
+  const newCx = newPositions.reduce((s, p) => s + p.x, 0) / newPositions.length
+  const newCy = newPositions.reduce((s, p) => s + p.y, 0) / newPositions.length
+  const dx = origCx - newCx
+  const dy = origCy - newCy
+
+  const tidiedLayout = layoutNodes.map((n) => {
+    const pos = positions.get(n.id)
+    return {
+      ...n,
+      position: pos ? { x: pos.x + dx, y: pos.y + dy } : n.position,
+    }
+  })
+
+  return [...tidiedLayout, ...stickyNotes]
 }
 
 // ─── Canvas ───────────────────────────────────────────────────────────────────
@@ -314,10 +333,21 @@ function CanvasInner() {
           size={1}
           color="#3f3f46"
         />
-        <Controls className="[&>button]:border-zinc-700 [&>button]:bg-zinc-800 [&>button]:text-zinc-300" />
+        <Controls
+          style={
+            {
+              "--xy-controls-button-background-color": "#27272a",
+              "--xy-controls-button-background-color-hover": "#3f3f46",
+              "--xy-controls-button-color": "#d4d4d8",
+              "--xy-controls-button-color-hover": "#ffffff",
+              "--xy-controls-button-border-color": "#52525b",
+            } as React.CSSProperties
+          }
+        />
         <MiniMap
           className="border-zinc-700 bg-zinc-900"
-          nodeColor={() => "#3f3f46"}
+          nodeColor={(n) => (n.type === "sticky_note" ? "transparent" : "#3f3f46")}
+          nodeStrokeColor={(n) => (n.type === "sticky_note" ? "transparent" : "#3f3f46")}
           maskColor="rgba(0,0,0,0.4)"
         />
       </ReactFlow>
