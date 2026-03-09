@@ -24,9 +24,11 @@ import {
   IconDotsVertical,
   IconPencil,
   IconTrash,
+  IconWorldUpload,
+  IconWorldOff,
 } from "@tabler/icons-react";
 import type { DbFlow } from "@/lib/types";
-import { createFlow, deleteFlow } from "@/app/actions/flows";
+import { createFlow, deleteFlow, publishFlow, unpublishFlow } from "@/app/actions/flows";
 
 interface FlowsClientProps {
   flows: DbFlow[];
@@ -58,6 +60,24 @@ export function FlowsClient({ flows: initialFlows }: FlowsClientProps) {
     const result = await deleteFlow(flowId);
     if (result.success) {
       setFlows((prev) => prev.filter((f) => f.id !== flowId));
+    }
+  }
+
+  async function handlePublish(flowId: string) {
+    const result = await publishFlow(flowId);
+    if (result.success) {
+      setFlows((prev) =>
+        prev.map((f) => (f.id === flowId ? { ...f, isPublished: true } : f)),
+      );
+    }
+  }
+
+  async function handleUnpublish(flowId: string) {
+    const result = await unpublishFlow(flowId);
+    if (result.success) {
+      setFlows((prev) =>
+        prev.map((f) => (f.id === flowId ? { ...f, isPublished: false } : f)),
+      );
     }
   }
 
@@ -105,6 +125,8 @@ export function FlowsClient({ flows: initialFlows }: FlowsClientProps) {
               key={flow.id}
               flow={flow}
               onDelete={() => handleDelete(flow.id)}
+              onPublish={() => handlePublish(flow.id)}
+              onUnpublish={() => handleUnpublish(flow.id)}
             />
           ))}
         </div>
@@ -151,7 +173,17 @@ export function FlowsClient({ flows: initialFlows }: FlowsClientProps) {
   );
 }
 
-function FlowCard({ flow, onDelete }: { flow: DbFlow; onDelete: () => void }) {
+function FlowCard({
+  flow,
+  onDelete,
+  onPublish,
+  onUnpublish,
+}: {
+  flow: DbFlow;
+  onDelete: () => void;
+  onPublish: () => void;
+  onUnpublish: () => void;
+}) {
   const router = useRouter();
 
   return (
@@ -170,7 +202,7 @@ function FlowCard({ flow, onDelete }: { flow: DbFlow; onDelete: () => void }) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 shrink-0 text-zinc-600 hover:text-zinc-300"
+              className="relative z-10 h-6 w-6 shrink-0 text-zinc-600 group-hover:text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100"
             >
               <IconDotsVertical size={14} />
             </Button>
@@ -186,6 +218,23 @@ function FlowCard({ flow, onDelete }: { flow: DbFlow; onDelete: () => void }) {
               <IconPencil size={14} />
               Edit
             </DropdownMenuItem>
+            {flow.isPublished ? (
+              <DropdownMenuItem
+                onClick={onUnpublish}
+                className="gap-2 focus:bg-zinc-700"
+              >
+                <IconWorldOff size={14} />
+                Unpublish
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onClick={onPublish}
+                className="gap-2 focus:bg-zinc-700"
+              >
+                <IconWorldUpload size={14} />
+                Publish
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={onDelete}
               className="gap-2 text-red-400 focus:bg-zinc-700 focus:text-red-300"

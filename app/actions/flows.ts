@@ -119,3 +119,20 @@ export async function publishFlow(flowId: string) {
 
   return { success: true }
 }
+
+export async function unpublishFlow(flowId: string) {
+  const session = await getSession()
+  if (!session) return { error: "Unauthorized" as const }
+
+  const flow = await prisma.flow.findFirst({
+    where: { id: flowId, userId: session.user.id },
+  })
+  if (!flow) return { error: "Not found" as const }
+
+  await prisma.flow.update({
+    where: { id: flowId },
+    data: { isPublished: false },
+  })
+
+  return { success: true }
+}
