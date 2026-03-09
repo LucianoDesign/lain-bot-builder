@@ -30,10 +30,27 @@ function baseNode(overrides: Partial<AppNode>): AppNode {
   } as AppNode;
 }
 
-function renderPanel(node: AppNode) {
-  const updateNodeData = vi.fn();
+function renderPanel(node: AppNode, options?: { syncUpdates?: boolean }) {
+  const updateNodeDataSpy = vi.fn();
   const pushSnapshot = vi.fn();
   const closeConfigPanel = vi.fn();
+
+  const updateNodeData = (nodeId: string, data: Partial<AppNode["data"]>) => {
+    updateNodeDataSpy(nodeId, data);
+
+    if (options?.syncUpdates) {
+      useFlowStore.setState((state) => ({
+        nodes: state.nodes.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                data: { ...n.data, ...data },
+              }
+            : n,
+        ),
+      }));
+    }
+  };
 
   useUIStore.setState(
     {
@@ -71,7 +88,7 @@ function renderPanel(node: AppNode) {
 
   render(<NodeConfigPanel />);
 
-  return { updateNodeData, pushSnapshot, closeConfigPanel };
+  return { updateNodeData: updateNodeDataSpy, pushSnapshot, closeConfigPanel };
 }
 
 describe("NodeConfigPanel", () => {
@@ -80,6 +97,13 @@ describe("NodeConfigPanel", () => {
     useUIStore.setState(useUIStore.getInitialState(), true);
     useFlowStore.setState(useFlowStore.getInitialState(), true);
     useVariablesStore.setState(useVariablesStore.getInitialState(), true);
+
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: vi.fn(),
+      },
+    });
   });
 
   it("muestra config de message", () => {
@@ -192,10 +216,170 @@ describe("NodeConfigPanel", () => {
     ).toBeInTheDocument();
   });
 
-  it("start muestra la webhook URL", () => {
-    useFlowStore.setState({ flowId: "flow-123", flowSettings: { schema: "chatwoot_wp" } }, false);
+  it("start muestra label, URL readonly y nota de Flow Settings", () => {
+    useFlowStore.setState({
+      flowId: "flow-123",
+      flowSettings: { schema: "custom_schema" },
+    });
+
     renderPanel(baseNode({ type: "start", data: {} }));
+
     expect(screen.getByText("Webhook URL")).toBeInTheDocument();
+
+    const input = screen.getByDisplayValue(
+      "https://back-bot.lain.ar?flowId=flow-123&schema=custom_schema",
+    );
+    expect(input).toHaveAttribute("readonly");
+    expect(screen.getByText(/Flow Settings/i)).toBeInTheDocument();
+  });
+
+  it("start copia la URL al clipboard", () => {
+    const writeText = vi.fn();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    useFlowStore.setState({
+      flowId: "flow-abc",
+      flowSettings: { schema: "chatwoot_wp" },
+    });
+
+    renderPanel(baseNode({ type: "start", data: {} }));
+
+    fireEvent.click(screen.getByTitle("Copy URL"));
+
+    expect(writeText).toHaveBeenCalledWith(
+      "https://back-bot.lain.ar?flowId=flow-abc&schema=chatwoot_wp",
+    );
+  });
+
+  it("text_input muestra Validation con - none - por defecto", () => {
+    renderPanel(baseNode({ type: "text_input", data: {} }));
+
+    expect(screen.getByText("Validation")).toBeInTheDocument();
+    const validationSelect = screen.getAllByRole("combobox")[1] as HTMLSelectElement;
+    expect(validationSelect.value).toBe("");
+    const noneOption = Array.from(validationSelect.options).find((option) => option.value === "");
+    expect(noneOption).toBeDefined();
+  });
+
+  it("text_input al seleccionar regex muestra Regex pattern", () => {
+    const { updateNodeData } = renderPanel(
+      baseNode({ type: "text_input", data: {} }),
+      { syncUpdates: true },
+    );
+
+    const validationSelect = screen.getAllByRole("combobox")[1] as HTMLSelectElement;
+    fireEvent.change(validationSelect, { target: { value: "regex" } });
+
+    expect(updateNodeData).toHaveBeenCalledWith("node-1", {
+      validation: { type: "regex" },
+    });
+    expect(screen.getByText("Regex pattern")).toBeInTheDocument();
+  });
+
+  it("text_input con tipo no regex no muestra Regex pattern", () => {
+    const { updateNodeData } = renderPanel(
+      baseNode({
+        type: "text_input",
+        data: { validation: { type: "regex", pattern: "^[A-Z]{3}$" } },
+      }),
+      { syncUpdates: true },
+    );
+
+    const validationSelect = screen.getAllByRole("combobox")[1] as HTMLSelectElement;
+    fireEvent.change(validationSelect, { target: { value: "email" } });
+
+    expect(updateNodeData).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Regex pattern")).not.toBeInTheDocument();
+  });
+
+  it("text_input con validacion muestra Error message", () => {
+    renderPanel(
+      baseNode({
+        type: "text_input",
+        data: { validation: { type: "email" } },
+      }),
+    );
+
+    expect(screen.getByText("Error message (optional)")).toBeInTheDocument();
+  });
+
+  it("text_input al seleccionar - none - envia validation undefined", () => {
+    const { updateNodeData } = renderPanel(
+      baseNode({
+        type: "text_input",
+        data: { validation: { type: "email", errorMessage: "bad" } },
+      }),
+    );
+
+    const validationSelect = screen.getAllByRole("combobox")[1] as HTMLSelectElement;
+    fireEvent.change(validationSelect, { target: { value: "" } });
+
+    expect(updateNodeData).toHaveBeenCalledWith("node-1", {
+      validation: undefined,
+    });
+  });
+
+  it("text_input al seleccionar un tipo envia validation con type correcto", () => {
+    const { updateNodeData } = renderPanel(baseNode({ type: "text_input", data: {} }));
+
+    const validationSelect = screen.getAllByRole("combobox")[1] as HTMLSelectElement;
+    fireEvent.change(validationSelect, { target: { value: "number" } });
+
+    expect(updateNodeData).toHaveBeenCalledWith("node-1", {
+      validation: { type: "number" },
+    });
+  });
+
+  it("text_input al editar Regex pattern envia pattern actualizado", () => {
+    const { updateNodeData } = renderPanel(
+      baseNode({
+        type: "text_input",
+        data: { validation: { type: "regex" } },
+      }),
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("^[A-Z]{3}$"), {
+      target: { value: "^\\d+$" },
+    });
+
+    expect(updateNodeData).toHaveBeenCalledWith("node-1", {
+      validation: {
+        type: "regex",
+        pattern: "^\\d+$",
+      },
+    });
+  });
+
+  it("text_input al editar Error message envia errorMessage actualizado", () => {
+    const { updateNodeData } = renderPanel(
+      baseNode({
+        type: "text_input",
+        data: { validation: { type: "email" } },
+      }),
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Please enter a valid value"), {
+      target: { value: "Email invalido" },
+    });
+
+    expect(updateNodeData).toHaveBeenCalledWith("node-1", {
+      validation: {
+        type: "email",
+        errorMessage: "Email invalido",
+      },
+    });
+  });
+
+  it("invalid_input muestra texto explicativo y sin campos editables", () => {
+    renderPanel(baseNode({ type: "invalid_input", data: {} }));
+
+    expect(screen.getByText(/fires when a/i)).toBeInTheDocument();
+    expect(screen.getByText(/handle of a Text Input node/i)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
   it("end muestra mensaje de no configurable", () => {
@@ -203,3 +387,5 @@ describe("NodeConfigPanel", () => {
     expect(screen.getByText(/no configurable properties/i)).toBeInTheDocument();
   });
 });
+
+

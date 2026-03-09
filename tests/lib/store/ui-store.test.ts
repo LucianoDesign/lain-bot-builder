@@ -6,6 +6,24 @@ describe("useUIStore", () => {
     useUIStore.setState(useUIStore.getInitialState(), true)
   })
 
+  it("estado inicial tiene isFlowSettingsPanelOpen en false", () => {
+    expect(useUIStore.getState().isFlowSettingsPanelOpen).toBe(false)
+  })
+
+  it("toggleFlowSettingsPanel cambia de false a true", () => {
+    useUIStore.getState().toggleFlowSettingsPanel()
+
+    expect(useUIStore.getState().isFlowSettingsPanelOpen).toBe(true)
+  })
+
+  it("toggleFlowSettingsPanel cambia de true a false", () => {
+    useUIStore.setState({ isFlowSettingsPanelOpen: true })
+
+    useUIStore.getState().toggleFlowSettingsPanel()
+
+    expect(useUIStore.getState().isFlowSettingsPanelOpen).toBe(false)
+  })
+
   it("setClipboard guarda nodo copiado", () => {
     useUIStore.getState().setClipboard({ type: "message", data: { text: "hola" } })
 
@@ -51,3 +69,4 @@ describe("useUIStore", () => {
     expect(useUIStore.getState().isConfigPanelOpen).toBe(false)
   })
 })
+
