@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { useFlowStore } from "./flow-store"
+import { useFlowStore } from "@/lib/store/flow-store"
 import type { AppEdge, AppNode } from "@/lib/types"
 
 function node(id: string, x = 0, y = 0): AppNode {
@@ -22,6 +22,68 @@ function edge(id: string, source = "a", target = "b"): AppEdge {
 describe("useFlowStore", () => {
   beforeEach(() => {
     useFlowStore.setState(useFlowStore.getInitialState(), true)
+  })
+
+  it("estado inicial incluye metadata por defecto", () => {
+    const state = useFlowStore.getState()
+
+    expect(state.flowId).toBe("")
+    expect(state.isPublished).toBe(false)
+    expect(state.flowSettings).toEqual({})
+  })
+
+  it("setFlowMeta actualiza flowId, isPublished y flowSettings", () => {
+    useFlowStore.getState().setFlowMeta({
+      flowId: "flow-123",
+      isPublished: true,
+      flowSettings: { schema: "chatwoot_wp", domain: "https://app.chatwoot.com" },
+    })
+
+    const state = useFlowStore.getState()
+    expect(state.flowId).toBe("flow-123")
+    expect(state.isPublished).toBe(true)
+    expect(state.flowSettings).toEqual({
+      schema: "chatwoot_wp",
+      domain: "https://app.chatwoot.com",
+    })
+  })
+
+  it("setIsPublished actualiza solo isPublished", () => {
+    useFlowStore.setState({
+      flowId: "flow-abc",
+      isPublished: false,
+      flowSettings: { schema: "chatwoot_wp" },
+    })
+
+    useFlowStore.getState().setIsPublished(true)
+
+    const state = useFlowStore.getState()
+    expect(state.isPublished).toBe(true)
+    expect(state.flowId).toBe("flow-abc")
+    expect(state.flowSettings).toEqual({ schema: "chatwoot_wp" })
+  })
+
+  it("updateFlowSettings actualiza solo flowSettings", () => {
+    useFlowStore.setState({
+      flowId: "flow-xyz",
+      isPublished: true,
+      flowSettings: { schema: "chatwoot_wp" },
+    })
+
+    useFlowStore.getState().updateFlowSettings({
+      schema: "chatwoot_wp",
+      domain: "https://chatwoot.example",
+      adminApiKey: "admin-key",
+    })
+
+    const state = useFlowStore.getState()
+    expect(state.flowSettings).toEqual({
+      schema: "chatwoot_wp",
+      domain: "https://chatwoot.example",
+      adminApiKey: "admin-key",
+    })
+    expect(state.flowId).toBe("flow-xyz")
+    expect(state.isPublished).toBe(true)
   })
 
   it("pushSnapshot guarda estado actual y limpia future", () => {
@@ -195,3 +257,5 @@ describe("useFlowStore", () => {
     expect(snapshotSpy).not.toHaveBeenCalled()
   })
 })
+
+

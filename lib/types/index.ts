@@ -34,6 +34,15 @@ export interface DbVariable {
   createdAt: Date
 }
 
+export interface FlowSettings {
+  schema?: string
+  chatwootBotKey?: string
+  wabaKey?: string
+  phoneId?: string
+  adminApiKey?: string
+  domain?: string
+}
+
 export interface DbFlow {
   id: string
   userId: string
@@ -67,6 +76,7 @@ export type NodeType =
   | "code"
   | "end"
   | "sticky_note"
+  | "invalid_input"
 
 export interface StickyNoteNodeData {
   text?: string
@@ -79,10 +89,23 @@ export interface MessageNodeData {
   content?: Array<{ type: "text" | "image"; text?: string; url?: string }>
 }
 
+export type InputValidationType = "email" | "number" | "url" | "phone" | "regex"
+
+export interface InputValidation {
+  type: InputValidationType
+  pattern?: string
+  errorMessage?: string
+}
+
 export interface TextInputNodeData {
   question?: string
   variableId?: string
   placeholder?: string
+  validation?: InputValidation
+}
+
+export interface InvalidInputEventNodeData {
+  // No configuration needed
 }
 
 export interface ChoiceChoice {

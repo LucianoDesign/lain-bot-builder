@@ -2,8 +2,17 @@ import { Handle, Position, type NodeProps } from "@xyflow/react"
 import { NodeWrapper } from "./NodeWrapper"
 import type { TextInputNodeData } from "@/lib/types"
 
+const validationLabel: Record<string, string> = {
+  email: "✉ email",
+  number: "# number",
+  url: "🔗 url",
+  phone: "📱 phone",
+  regex: "regex",
+}
+
 export function TextInputNode({ id, data, selected }: NodeProps) {
   const d = data as TextInputNodeData
+  const hasValidation = !!d?.validation?.type
 
   return (
     <NodeWrapper
@@ -32,13 +41,41 @@ export function TextInputNode({ id, data, selected }: NodeProps) {
         )}
       </p>
       {d?.variableId && (
-        <p className="mt-1 text-[10px] text-violet-600">→ saves to variable</p>
+        <p className="mt-0.5 text-[10px] text-violet-600">→ saves to variable</p>
       )}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="h-2.5 w-2.5 border-2 border-zinc-700 bg-zinc-900"
-      />
+      {hasValidation && (
+        <p className="mt-0.5 text-[10px] text-amber-500">
+          ⚡ {validationLabel[d.validation!.type]}
+        </p>
+      )}
+      {hasValidation ? (
+        <>
+          <div className="relative mt-2 flex justify-between text-[9px]">
+            <span className="text-violet-400">Valid</span>
+            <span className="text-red-400">Invalid</span>
+          </div>
+          <Handle
+            id="default"
+            type="source"
+            position={Position.Bottom}
+            style={{ left: "25%" }}
+            className="h-2.5 w-2.5 border-2 border-violet-700 bg-zinc-900"
+          />
+          <Handle
+            id="invalid"
+            type="source"
+            position={Position.Bottom}
+            style={{ left: "75%" }}
+            className="h-2.5 w-2.5 border-2 border-red-700 bg-zinc-900"
+          />
+        </>
+      ) : (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="h-2.5 w-2.5 border-2 border-zinc-700 bg-zinc-900"
+        />
+      )}
     </NodeWrapper>
   )
 }

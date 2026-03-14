@@ -18,7 +18,24 @@ const STICKY_NOTE: NodeItem = {
   description: "Add a canvas note",
 }
 
+const EVENT_NODES: NodeItem[] = [
+  {
+    type: "invalid_input",
+    label: "Invalid Input",
+    color: "border-red-900 text-red-400",
+    icon: "⚠",
+    description: "Input validation failed",
+  },
+]
+
 const MVP_NODES: NodeItem[] = [
+  {
+    type: "start",
+    label: "Start",
+    color: "border-emerald-700 text-emerald-400",
+    icon: "▶",
+    description: "Flow entry point",
+  },
   {
     type: "message",
     label: "Message",
@@ -101,6 +118,13 @@ export function Sidebar() {
       <Separator className="bg-zinc-800" />
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {MVP_NODES.map((node) => (
+          <NodeItem key={node.type} node={node} onDragStart={onDragStart} />
+        ))}
+        <Separator className="my-2 bg-zinc-800" />
+        <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+          Events
+        </p>
+        {EVENT_NODES.map((node) => (
           <NodeItem key={node.type} node={node} onDragStart={onDragStart} />
         ))}
         <Separator className="my-2 bg-zinc-800" />

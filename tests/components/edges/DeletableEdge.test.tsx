@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import React, { type CSSProperties, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DeletableEdge } from "./DeletableEdge";
-import { useFlowStore } from "../../lib/store/flow-store";
-import { useUIStore } from "../../lib/store/ui-store";
+import { DeletableEdge } from "@/components/edges/DeletableEdge";
+import { useFlowStore } from "@/lib/store/flow-store";
+import { useUIStore } from "@/lib/store/ui-store";
 
 const mocks = vi.hoisted(() => ({
   deleteElements: vi.fn(),

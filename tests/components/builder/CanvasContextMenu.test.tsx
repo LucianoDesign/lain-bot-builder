@@ -2,7 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import React, { type ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { CanvasContextMenu } from "./CanvasContextMenu";
+import { CanvasContextMenu } from "@/components/builder/CanvasContextMenu";
 
 function setup(props?: Partial<ComponentProps<typeof CanvasContextMenu>>) {
   const handlers = {

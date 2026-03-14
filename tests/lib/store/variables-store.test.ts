@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { useVariablesStore, type FlowVariable } from "./variables-store"
+import { useVariablesStore, type FlowVariable } from "@/lib/store/variables-store"
 
 function variable(id: string, name = id): FlowVariable {
   return {

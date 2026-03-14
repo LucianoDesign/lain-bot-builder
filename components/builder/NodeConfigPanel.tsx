@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { IconX, IconPlus, IconTrash } from "@tabler/icons-react"
+import { IconX, IconPlus, IconTrash, IconCopy, IconCheck } from "@tabler/icons-react"
+import { useState } from "react"
 import type {
   MessageNodeData,
   TextInputNodeData,
@@ -17,6 +18,7 @@ import type {
   ConditionNodeData,
   ConditionOperator,
   SetVariableNodeData,
+  InputValidationType,
 } from "@/lib/types"
 
 export function NodeConfigPanel() {
@@ -84,10 +86,25 @@ export function NodeConfigPanel() {
             onChange={(d) => updateNodeData(selectedNodeId, d)}
           />
         )}
-        {(node.type === "start" || node.type === "end") && (
+        {node.type === "start" && <StartConfig />}
+        {node.type === "end" && (
           <p className="text-xs text-zinc-500">
             This node has no configurable properties.
           </p>
+        )}
+        {node.type === "invalid_input" && (
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-400">
+              This event fires when a <span className="text-violet-400">Text Input</span> node
+              receives input that fails its validation rules.
+            </p>
+            <div className="rounded-md border border-zinc-800 bg-zinc-800/30 p-2 text-[10px] text-zinc-500">
+              Connect the{" "}
+              <span className="font-semibold text-red-400">Invalid</span> handle of a Text Input
+              node to this node, then continue the flow from the output below
+              (e.g. send an error message).
+            </div>
+          </div>
         )}
         {node.type === "sticky_note" && (
           <p className="text-xs text-zinc-500">
@@ -108,6 +125,50 @@ export function NodeConfigPanel() {
         </Button>
       </div>
     </aside>
+  )
+}
+
+// ─── Start ──────────────────────────────────────────────────────────────────
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://back-bot.lain.ar"
+
+function StartConfig() {
+  const flowId = useFlowStore((s) => s.flowId)
+  const flowSettings = useFlowStore((s) => s.flowSettings)
+  const [copied, setCopied] = useState(false)
+
+  const schema = flowSettings?.schema ?? "chatwoot_wp"
+  const webhookUrl = `${BACKEND_URL}?flowId=${flowId}&schema=${schema}`
+
+  function handleCopy() {
+    navigator.clipboard.writeText(webhookUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="space-y-3">
+      <FieldLabel>Webhook URL</FieldLabel>
+      <div className="flex gap-1.5">
+        <input
+          readOnly
+          value={webhookUrl}
+          className="flex-1 rounded-md border border-zinc-700 bg-zinc-800/50 px-2 py-1.5 text-[11px] text-zinc-400 focus:outline-none truncate"
+        />
+        <button
+          onClick={handleCopy}
+          title="Copy URL"
+          className="flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-800 px-2 text-zinc-500 hover:text-emerald-400 transition-colors"
+        >
+          {copied ? <IconCheck size={13} className="text-emerald-400" /> : <IconCopy size={13} />}
+        </button>
+      </div>
+      <p className="text-[10px] text-zinc-600">
+        Use this URL as the webhook endpoint in your integration.
+        Configure schema and credentials in{" "}
+        <span className="text-zinc-400">Flow Settings</span>.
+      </p>
+    </div>
   )
 }
 
@@ -178,6 +239,52 @@ function TextInputConfig({
           variables={variables}
         />
       </div>
+      <div className="space-y-1.5">
+        <FieldLabel>Validation</FieldLabel>
+        <select
+          value={data?.validation?.type ?? ""}
+          onChange={(e) => {
+            const val = e.target.value as InputValidationType | ""
+            onChange({
+              validation: val ? { ...(data?.validation ?? {}), type: val } : undefined,
+            })
+          }}
+          className="h-8 w-full rounded-md border border-zinc-700 bg-zinc-800 px-2 text-xs text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+        >
+          <option value="">— none —</option>
+          <option value="email">Email</option>
+          <option value="number">Number</option>
+          <option value="url">URL</option>
+          <option value="phone">Phone</option>
+          <option value="regex">Custom regex</option>
+        </select>
+      </div>
+      {data?.validation?.type === "regex" && (
+        <div className="space-y-1.5">
+          <FieldLabel>Regex pattern</FieldLabel>
+          <Input
+            value={data.validation.pattern ?? ""}
+            onChange={(e) =>
+              onChange({ validation: { ...data.validation!, pattern: e.target.value } })
+            }
+            placeholder="^[A-Z]{3}$"
+            className="h-8 border-zinc-700 bg-zinc-800 text-xs text-zinc-100 placeholder:text-zinc-600 font-mono"
+          />
+        </div>
+      )}
+      {data?.validation?.type && (
+        <div className="space-y-1.5">
+          <FieldLabel>Error message (optional)</FieldLabel>
+          <Input
+            value={data.validation.errorMessage ?? ""}
+            onChange={(e) =>
+              onChange({ validation: { ...data.validation!, errorMessage: e.target.value } })
+            }
+            placeholder="Please enter a valid value"
+            className="h-8 border-zinc-700 bg-zinc-800 text-xs text-zinc-100 placeholder:text-zinc-600"
+          />
+        </div>
+      )}
     </div>
   )
 }

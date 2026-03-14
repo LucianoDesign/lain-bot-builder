@@ -16,6 +16,7 @@ export const nodeTypeSchema = z.enum([
   "code",
   "end",
   "sticky_note",
+  "invalid_input",
 ])
 
 const flowNodeSchema = z.object({
